@@ -14,7 +14,7 @@ import RPi.GPIO as GPIO
 from RPLCD.i2c import CharLCD
 from picamera2 import Picamera2
 
-from zone_burst_capture import start_capture_burst
+#from zone_burst_capture import start_capture_burst
 logging.getLogger("urllib3").setLevel(logging.ERROR)
 
 READER   = None
@@ -465,7 +465,7 @@ def main():
                 print(f"  [PLATE] Detected: {plate}")
 
                 # Trigger background zone burst
-                start_capture_burst()
+                #start_capture_burst()
 
                 result = lookup_plate(plate)
 
