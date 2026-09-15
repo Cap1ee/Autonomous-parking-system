@@ -247,20 +247,31 @@ def lookup_plate(plate):
     return None
 
 
-def find_slot(faculty):
+def find_slot(faculty, role=None):
     """
-    Returns (slot_id, zone_used) using zone overflow logic, or (None, None)
-    if both zones are full. Slots are no longer pre-assigned to a single
-    faculty — zone A (1-6) is shared by Medicine/Computing, zone B (7-8)
-    is Engineering's — so this queries by zone, not a fixed faculty column.
+    Returns (slot_id, zone_used) using zone overflow logic.
+    If the driver is a Dean, it will look for their specific reserved slot first.
+    Otherwise, it skips any reserved slots.
     """
     con = get_db()
     cur = con.cursor()
 
+    # 1. If the driver is a Dean, look for their reserved slot first
+    if role and role.startswith("Dean"):
+        cur.execute(
+            "SELECT slot_id, zone FROM parking_slots WHERE reserved_for=? AND is_occupied=0 LIMIT 1",
+            (role,)
+        )
+        row = cur.fetchone()
+        if row:
+            con.close()
+            return row[0], row[1]
+
+    # 2. For normal staff, find a non-reserved slot
     primary_zone = FACULTY_GROUP[faculty]
     for zone in ZONE_OVERFLOW[primary_zone]:
         cur.execute(
-            "SELECT slot_id FROM parking_slots WHERE zone=? AND is_occupied=0 ORDER BY slot_id LIMIT 1",
+            "SELECT slot_id FROM parking_slots WHERE zone=? AND is_occupied=0 AND reserved_for IS NULL ORDER BY slot_id LIMIT 1",
             (zone,)
         )
         row = cur.fetchone()
@@ -270,7 +281,6 @@ def find_slot(faculty):
 
     con.close()
     return None, None
-
 
 def assign_slot(slot_id, plate, faculty):
     """
@@ -482,7 +492,7 @@ def main():
                     owner, role, faculty = result
                     print(f"  [AUTH] {owner} | {role} | {faculty}")
 
-                    slot_id, zone_used = find_slot(faculty)
+                    slot_id, zone_used = find_slot(faculty, role)
 
                     if slot_id is None:
                         # ── FULL ──
