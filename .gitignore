@@ -1,0 +1,20 @@
+# Secrets (DO NOT UPLOAD PASSWORDS)
+secrets.h
+
+# Database files
+*.db
+*.db-wal
+*.db-shm
+
+# Temporary dashboard images
+dashboard/static/capture.jpg
+dashboard/static/plate_crop.jpg
+dashboard/static/zone_*_check.jpg
+static/references/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Backups
+*_backup*.py
