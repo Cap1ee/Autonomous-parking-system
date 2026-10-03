@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KDU SmartPark — Whitelist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg: #0A101C;
+        --panel: #121A2A;
+        --line: #24314A;
+        --line-soft: #1B2438;
+        --text: #E7ECF3;
+        --text-muted: #8B96AC;
+        --text-faint: #6C7A98;
+        --accent: #3FC7AC;
+        --accent-dim: #3FC7AC26;
+        --free: #34B172;
+        --free-dim: #34B17222;
+        --occupied: #E2604F;
+        --occupied-dim: #E2604F1F;
+        --radius-sm: 3px;
+        --radius-md: 5px;
+        --font-display: 'Space Grotesk', system-ui, sans-serif;
+        --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        font-family: var(--font-mono);
+        background: var(--bg);
+        background-image:
+            radial-gradient(circle at 15% 10%, #16223a80 0%, transparent 45%),
+            radial-gradient(circle at 85% 90%, #14213280 0%, transparent 40%);
+        color: var(--text);
+        margin: 0;
+        padding: 28px;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    h1, h2 {
+        font-family: var(--font-display);
+        margin: 0;
+        letter-spacing: -0.01em;
+    }
+
+    .console { max-width: 1000px; margin: 0 auto; }
+
+    /* ---------- Header (matches dashboard) ---------- */
+    .console-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding-bottom: 24px;
+        margin-bottom: 32px;
+        position: relative;
+    }
+    .console-header::after {
+        content: "";
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        height: 1px;
+        background: linear-gradient(90deg, var(--accent) 0%, var(--line) 35%, var(--line) 100%);
+        opacity: 0.5;
+    }
+
+    .brand { display: flex; align-items: center; gap: 14px; }
+
+    .brand-mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: linear-gradient(160deg, var(--accent-dim), transparent);
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 0 0 1px rgba(63,199,172,0.08), 0 6px 18px -6px rgba(63,199,172,0.45);
+    }
+
+    .brand h1 { font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: -0.015em; }
+    .brand .subtitle { margin: 3px 0 0 0; font-size: 12px; color: var(--text-muted); letter-spacing: 0.02em; }
+
+    .nav-link {
+        font-size: 12px;
+        color: var(--text-muted);
+        text-decoration: none;
+        border: 1px solid var(--line);
+        padding: 7px 12px;
+        border-radius: var(--radius-md);
+        transition: color 0.15s ease, border-color 0.15s ease;
+        white-space: nowrap;
+    }
+    .nav-link:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ---------- Panels (matches dashboard, elevated) ---------- */
+    .panel {
+        position: relative;
+        background: linear-gradient(165deg, #141D30 0%, var(--panel) 55%);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 26px;
+        margin-bottom: 20px;
+        box-shadow: 0 12px 28px -18px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.03);
+        overflow: hidden;
+    }
+    .panel::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent), transparent 70%);
+        opacity: 0.7;
+    }
+    .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 22px;
+    }
+    .panel-header-left { display: flex; align-items: center; gap: 10px; }
+    .panel-icon {
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        background: var(--accent-dim);
+        border: 1px solid rgba(63,199,172,0.4);
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .panel-header h2 { font-size: 15px; font-weight: 600; letter-spacing: -0.005em; }
+    .panel-count {
+        font-size: 11px;
+        color: var(--text-faint);
+        background: var(--line-soft);
+        border: 1px solid var(--line);
+        padding: 3px 10px;
+        border-radius: 999px;
+    }
+
+    /* ---------- Form ---------- */
+    form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+    form .full { grid-column: 1 / 3; }
+
+    label {
+        font-size: 11px;
+        color: var(--text-muted);
+        display: block;
+        margin-bottom: 6px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 10px 12px;
+        background: rgba(9,14,24,0.55);
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        color: var(--text);
+        font-family: var(--font-mono);
+        font-size: 13px;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+    input::placeholder { color: var(--text-faint); }
+    input:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+        background: rgba(9,14,24,0.85);
+        box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    select {
+        appearance: none;
+        background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%), linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+        background-position: calc(100% - 16px) center, calc(100% - 11px) center;
+        background-size: 5px 5px, 5px 5px;
+        background-repeat: no-repeat;
+    }
+
+    button.submit-btn {
+        grid-column: 1 / 3;
+        padding: 12px;
+        margin-top: 4px;
+        background: linear-gradient(135deg, var(--accent), #33ab93);
+        color: #06110E;
+        border: none;
+        border-radius: 7px;
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 13px;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        transition: box-shadow 0.2s ease, transform 0.15s ease;
+        box-shadow: 0 8px 20px -8px rgba(63,199,172,0.55);
+    }
+    button.submit-btn:hover { box-shadow: 0 10px 26px -8px rgba(63,199,172,0.75); transform: translateY(-1px); }
+    button.submit-btn:active { transform: translateY(0); }
+
+    .msg { font-size: 12px; margin-top: 10px; }
+    .msg.error { color: var(--occupied); }
+    .msg.success { color: var(--free); }
+
+    /* ---------- Table (matches dashboard activity table, elevated) ---------- */
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { text-align: left; padding: 11px 12px; white-space: nowrap; }
+    th {
+        color: var(--text-faint);
+        font-weight: 600;
+        font-size: 10.5px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        border-bottom: 2px solid var(--line);
+    }
+    td { color: var(--text-muted); border-bottom: 1px solid var(--line-soft); }
+    td:first-child { color: var(--text); font-weight: 600; font-family: var(--font-display); letter-spacing: 0.01em; }
+    tbody tr { position: relative; transition: background 0.15s ease; }
+    tbody tr::before {
+        content: "";
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 2px;
+        background: var(--accent);
+        opacity: 0;
+        transition: opacity 0.15s ease;
+    }
+    tbody tr:hover { background: rgba(63,199,172,0.05); }
+    tbody tr:hover::before { opacity: 1; }
+    tbody tr:hover td { color: var(--text); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .del-btn {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        padding: 4px 10px;
+        cursor: pointer;
+        border: 1px solid var(--occupied);
+        background: transparent;
+        color: var(--occupied);
+        border-radius: 999px;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+    .del-btn:hover { background: var(--occupied); color: #0A101C; }
+
+    .table-wrap { overflow-x: auto; }
+
+    /* ---------- Confirm modal (matches dashboard) ---------- */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(6,10,18,0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        padding: 20px;
+    }
+    .modal-overlay[hidden] { display: none; }
+    .modal-box {
+        background: linear-gradient(165deg, #141D30 0%, var(--panel) 55%);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 24px;
+        max-width: 320px;
+        width: 100%;
+        box-shadow: 0 20px 45px -12px rgba(0,0,0,0.6);
+    }
+    .modal-box h3 { font-family: var(--font-display); font-size: 15px; font-weight: 600; margin: 0 0 8px 0; color: var(--text); }
+    .modal-box p { font-size: 12px; color: var(--text-muted); margin: 0 0 20px 0; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .modal-btn {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        padding: 8px 14px;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+    .modal-btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--text-muted); }
+    .modal-btn.ghost:hover { color: var(--text); border-color: var(--text-muted); }
+    .modal-btn.danger { background: transparent; border: 1px solid var(--occupied); color: var(--occupied); }
+    .modal-btn.danger:hover { background: var(--occupied); color: #0A101C; }
+
+    @media (max-width: 620px) {
+        body { padding: 16px; }
+        form { grid-template-columns: 1fr; }
+        form .full { grid-column: 1; }
+        button.submit-btn { grid-column: 1; }
+    }
+</style>
+</head>
+<body>
+
+<div class="console">
+    <header class="console-header">
+        <div class="brand">
+            <div class="brand-mark">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 15.5c1.4-2.6 3.6-4 8-4s6.6 1.4 8 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <path d="M3 15.5h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <circle cx="7.5" cy="17.3" r="1.3" stroke="currentColor" stroke-width="1.3"/>
+                    <circle cx="16.5" cy="17.3" r="1.3" stroke="currentColor" stroke-width="1.3"/>
+                    <path d="M12 11.5V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M10.3 8h3.4v1.6a1.7 1.7 0 0 1-1.7 1.7 1.7 1.7 0 0 1-1.7-1.7V8Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                    <path d="M11 6.3v1.4M13 6.3v1.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div>
+                <h1>KDU SmartPark</h1>
+                <p class="subtitle">Whitelist management</p>
+            </div>
+        </div>
+        <a class="nav-link" href="/">&larr; Back to dashboard</a>
+    </header>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div class="panel-header-left">
+                <div class="panel-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h2>Add new plate</h2>
+            </div>
+        </div>
+        <form id="add-form">
+            <div>
+                <label>Plate number</label>
+                <input type="text" id="plate" placeholder="e.g. CAB-1234" required>
+            </div>
+            <div>
+                <label>Owner name</label>
+                <input type="text" id="owner_name" placeholder="e.g. Dr. Perera" required>
+            </div>
+            <div>
+                <label>Role</label>
+                <input type="text" id="role" placeholder="e.g. Lecturer">
+            </div>
+            <div>
+                <label>Faculty</label>
+                <select id="faculty" required>
+                    <option value="">Select faculty</option>
+                    <option value="Faculty of Computing">Faculty of Computing</option>
+                    <option value="Faculty of Engineering">Faculty of Engineering</option>
+                </select>
+            </div>
+            <button type="submit" class="submit-btn">Add to whitelist</button>
+        </form>
+        <div id="form-msg" class="msg"></div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div class="panel-header-left">
+                <div class="panel-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="4" width="16" height="16" rx="2.5" stroke="currentColor" stroke-width="1.7"/>
+                        <path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h2>Current whitelist</h2>
+            </div>
+            <span class="panel-count" id="entry-count">— entries</span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Plate</th><th>Owner</th><th>Role</th><th>Faculty</th><th>Registered</th><th></th></tr>
+                </thead>
+                <tbody id="whitelist-body">
+                    <tr><td colspan="6">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<div class="modal-overlay" id="confirm-overlay" hidden>
+    <div class="modal-box">
+        <h3 id="confirm-title">Remove this plate?</h3>
+        <p id="confirm-body">This will remove the plate from the whitelist.</p>
+        <div class="modal-actions">
+            <button class="modal-btn ghost" id="confirm-cancel">Cancel</button>
+            <button class="modal-btn danger" id="confirm-ok">Remove</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let pendingDeleteId = null;
+
+async function loadWhitelist() {
+    const res = await fetch("/api/whitelist");
+    const data = await res.json();
+    const body = document.getElementById("whitelist-body");
+    body.innerHTML = "";
+
+    const countEl = document.getElementById("entry-count");
+    countEl.textContent = data.length + (data.length === 1 ? " entry" : " entries");
+
+    if (data.length === 0) {
+        body.innerHTML = "<tr><td colspan='6'>No entries yet</td></tr>";
+        return;
+    }
+
+    data.forEach(entry => {
+        const tr = document.createElement("tr");
+        const registered = entry.registered_at ? entry.registered_at.replace("T", " ").slice(0, 19) : "";
+        tr.innerHTML = `
+            <td>${entry.plate}</td>
+            <td>${entry.owner_name}</td>
+            <td>${entry.role || ""}</td>
+            <td>${entry.faculty}</td>
+            <td>${registered}</td>
+            <td><button class="del-btn" data-id="${entry.id}" data-plate="${entry.plate}">Remove</button></td>
+        `;
+        body.appendChild(tr);
+    });
+
+    document.querySelectorAll(".del-btn").forEach(btn => {
+        btn.addEventListener("click", () => openDeleteConfirm(btn.dataset.id, btn.dataset.plate));
+    });
+}
+
+function openDeleteConfirm(id, plate) {
+    pendingDeleteId = id;
+    document.getElementById("confirm-title").textContent = "Remove " + plate + "?";
+    document.getElementById("confirm-body").textContent =
+        "This will remove " + plate + " from the whitelist.";
+    document.getElementById("confirm-overlay").hidden = false;
+}
+
+async function confirmDelete() {
+    const id = pendingDeleteId;
+    document.getElementById("confirm-overlay").hidden = true;
+    if (id == null) return;
+    const res = await fetch("/api/whitelist/" + id, { method: "DELETE" });
+    if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Failed to delete");
+    }
+    loadWhitelist();
+}
+
+document.getElementById("confirm-cancel").addEventListener("click", () => {
+    document.getElementById("confirm-overlay").hidden = true;
+    pendingDeleteId = null;
+});
+document.getElementById("confirm-ok").addEventListener("click", confirmDelete);
+
+document.getElementById("add-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msgEl = document.getElementById("form-msg");
+    msgEl.textContent = "";
+    msgEl.className = "msg";
+
+    const payload = {
+        plate: document.getElementById("plate").value,
+        owner_name: document.getElementById("owner_name").value,
+        role: document.getElementById("role").value,
+        faculty: document.getElementById("faculty").value,
+    };
+
+    const res = await fetch("/api/whitelist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+        msgEl.textContent = "Plate added successfully.";
+        msgEl.className = "msg success";
+        document.getElementById("add-form").reset();
+        loadWhitelist();
+    } else {
+        msgEl.textContent = data.error || "Failed to add plate";
+        msgEl.className = "msg error";
+    }
+});
+
+loadWhitelist();
+</script>
+
+</body>
+</html>
