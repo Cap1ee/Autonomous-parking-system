@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KDU SmartPark Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0A101C;--panel:#121A2A;--line:#24314A;--line-soft:#1B2438;--text:#E7ECF3;--text-muted:#8B96AC;--text-faint:#6C7A98;--warning:#DDA53B;--warning-dim:#DDA53B1F;--accent:#3FC7AC;--accent-dim:#3FC7AC26;--free:#34B172;--free-dim:#34B17222;--occupied:#E2604F;--dean:#9A8CF8;--radius-sm:3px;--radius-md:5px;--font-display:'Space Grotesk',system-ui,sans-serif;--font-mono:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,monospace}
+*{box-sizing:border-box}
+body{font-family:var(--font-mono);background:var(--bg);background-image:radial-gradient(circle at 15% 10%,#16223a80 0%,transparent 45%),radial-gradient(circle at 85% 90%,#14213280 0%,transparent 40%);color:var(--text);margin:0;padding:28px;font-size:20px;line-height:1.6}
+h1,h2{font-family:var(--font-display);margin:0;letter-spacing:-.01em}
+.console{max-width:1280px;margin:0 auto}
+.console-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;padding-bottom:22px;margin-bottom:22px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:34px;height:34px;border-radius:var(--radius-md);background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);font-family:var(--font-display);font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand h1{font-size:30px;font-weight:700}
+.brand .subtitle{margin:2px 0 0;font-size:15px;color:var(--text-muted)}
+.header-right{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.status-pill{display:flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 14px 7px 10px;font-size:12px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot.online{background:var(--free);animation:pulse 2s infinite}
+.dot.offline{background:var(--occupied)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,177,114,.55)}70%{box-shadow:0 0 0 6px rgba(52,177,114,0)}100%{box-shadow:0 0 0 0 rgba(52,177,114,0)}}
+.last-updated{font-size:11px;color:var(--text-faint)}
+.nav-link{font-size:12px;color:var(--text-muted);text-decoration:none;border:1px solid var(--line);padding:7px 12px;border-radius:var(--radius-md);transition:color .15s,border-color .15s}
+.nav-link:hover{color:var(--accent);border-color:var(--accent)}
+.outage-banner{display:flex;align-items:center;gap:10px;background:var(--warning-dim);border:1px solid var(--warning);color:#F3D9A8;border-radius:var(--radius-md);padding:10px 16px;font-size:12px;margin-bottom:18px}
+.outage-banner[hidden]{display:none}
+.outage-dot{width:7px;height:7px;border-radius:50%;background:var(--warning);flex-shrink:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);padding:20px}
+.panel-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px}
+.panel-header h2{font-size:20px;font-weight:600}
+.panel-meta{font-size:12px;color:var(--text-muted)}
+.map-legend{display:flex;align-items:center;gap:14px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted)}
+.legend-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.legend-dot.free{background:var(--free);box-shadow:0 0 4px var(--free)}
+.legend-dot.occupied{background:var(--occupied);box-shadow:0 0 4px var(--occupied)}
+.legend-dot.dean{background:var(--dean);box-shadow:0 0 4px var(--dean)}
+.console-grid{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:18px;align-items:start}
+.sidebar{display:flex;flex-direction:column;gap:18px}
+
+/* ---------- Site map (asphalt lot view, original styling) ---------- */
+.layout-wrap{position:relative;background:radial-gradient(circle at 20% 15%,#62666e 0%,transparent 55%),linear-gradient(155deg,#585c64 0%,#45484e 55%,#3a3d43 100%);border:1px solid var(--line);border-radius:16px;padding:14px 10px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
+.layout-wrap svg{position:relative;z-index:1;width:100%;height:auto;display:block}
+.corner-greenery{position:absolute;width:34px;height:34px;pointer-events:none;border-radius:42% 58% 55% 45%/55% 42% 58% 45%;background:radial-gradient(circle at 30% 30%,#7bcb68 0 46%,transparent 48%),radial-gradient(circle at 68% 22%,#5aa84a 0 42%,transparent 44%),radial-gradient(circle at 40% 68%,#4f9640 0 48%,transparent 50%),radial-gradient(circle at 78% 70%,#72c05e 0 42%,transparent 44%),radial-gradient(circle at 55% 45%,#5cae4b 0 50%,transparent 52%);box-shadow:0 3px 6px rgba(0,0,0,.35);opacity:.95;z-index:2}
+.corner-greenery.top-left{top:8px;left:8px}.corner-greenery.bottom-left{bottom:8px;left:8px}
+.rd{fill:#4A4D53}
+.dash{fill:none;stroke:#fff;stroke-width:2;stroke-dasharray:6 6;opacity:.75}
+.bay{fill:none;stroke:#fff;stroke-width:2.5;stroke-dasharray:10 8;opacity:.6}
+.zh{fill:#F4F6F9;font:600 16px var(--font-display);text-anchor:middle;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+.zline{stroke:rgba(255,255,255,.28);stroke-width:1}
+.lbl{fill:#D6DAE1;font:500 12px var(--font-mono);letter-spacing:.04em}
+.chip{fill:rgba(10,16,28,.82);stroke:rgba(255,255,255,.18)}
+.chip-t{fill:#fff;font:700 12.5px var(--font-display);letter-spacing:.06em;text-anchor:middle}
+.temple{fill:rgba(255,255,255,.06);stroke:rgba(255,255,255,.4);stroke-dasharray:4 3}
+.temple-t{fill:#EDEFF2;font:500 15px var(--font-display);text-anchor:middle}
+/* slot boxes: white top/bottom rules + LED sensor strip on the left */
+.slot .bg{fill:#4E545A}.slot.occupied .bg{fill:#55494A}
+.slot .bd{fill:rgba(255,255,255,.55)}.slot.dean .bd{fill:var(--dean)}
+.slot .strip{fill:rgba(0,0,0,.25)}
+.slot .led{fill:var(--free);filter:drop-shadow(0 0 3px var(--free))}
+.slot.occupied .led{fill:var(--occupied);filter:drop-shadow(0 0 3px var(--occupied))}
+.slot .cap{fill:#C9CED6;font:400 10px var(--font-mono);letter-spacing:.08em;text-anchor:middle}
+.slot.dean .cap{fill:#BBB1FF}
+.slot .sid{fill:#F2F4F7;font:700 30px var(--font-display);text-anchor:middle}
+.slot .pl{fill:var(--free);font:500 12px var(--font-mono);text-anchor:middle}
+.slot.occupied .pl{fill:#F0BDB6;font-weight:400}
+.slot .fb{cursor:pointer;outline:none}
+.slot .fb rect{fill:transparent;stroke:var(--occupied);transition:fill .15s}
+.slot .fb text{fill:#F0BDB6;font:400 10.5px var(--font-mono);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.slot .fb:hover rect,.slot .fb:focus-visible rect{fill:var(--occupied)}
+.slot .fb:hover text,.slot .fb:focus-visible text{fill:#0A101C}
+
+/* ---------- Occupancy summary ---------- */
+.hero-stat{display:flex;align-items:baseline;gap:6px;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--line-soft)}
+.hero-number{font-family:var(--font-display);font-size:48px;font-weight:700;color:var(--accent);line-height:1}
+.hero-unit{font-size:18px;color:var(--text-muted)}
+.zone-bar{margin-bottom:18px}.zone-bar:last-child{margin-bottom:0}
+.zone-bar-label{display:flex;justify-content:space-between;font-size:16px;margin-bottom:8px}
+.zone-bar-label span:first-child{color:var(--text);font-family:var(--font-display);font-weight:500}
+.zone-bar-label span:last-child{color:var(--text-muted)}
+.zone-bar-track{height:8px;background:var(--line-soft);border-radius:999px;overflow:hidden}
+.zone-bar-fill{height:100%;background:var(--accent);border-radius:999px;transition:width .3s ease;width:0}
+
+/* ---------- Capture panel ---------- */
+.capture-img{width:100%;display:block;border-radius:var(--radius-sm);border:1px solid var(--line);margin-bottom:10px;background:var(--bg)}
+.capture-caption{font-size:11px;color:var(--text-faint);margin:0}
+
+/* ---------- Activity table ---------- */
+.activity-panel{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+th{color:var(--text-faint);font-weight:500;font-size:13px}
+td{color:var(--text-muted)}td:nth-child(2){color:var(--text)}
+td:nth-child(2){font-size:17px;font-weight:600}
+tbody tr:hover td{color:var(--text)}tbody tr:last-child td{border-bottom:none}
+.action-tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;letter-spacing:.03em;text-transform:uppercase}
+.action-tag.entry{background:var(--free-dim);color:var(--free)}
+.action-tag.exit{background:var(--line-soft);color:var(--text-muted)}
+@media(max-width:860px){body{padding:16px}.console-grid{grid-template-columns:1fr}.header-right{width:100%;justify-content:space-between}}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.modal-overlay{position:fixed;inset:0;background:rgba(6,10,18,.6);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-overlay[hidden]{display:none}
+.modal-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);padding:22px;max-width:320px;width:100%}
+.modal-box h3{font-family:var(--font-display);font-size:15px;font-weight:600;margin:0 0 8px}
+.modal-box p{font-size:12px;color:var(--text-muted);margin:0 0 20px}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px}
+.modal-btn{font-family:var(--font-mono);font-size:1=18px;padding:8px 14px;border-radius:var(--radius-md);cursor:pointer;transition:background .15s,color .15s}
+.modal-btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text-muted)}
+.modal-btn.ghost:hover{color:var(--text);border-color:var(--text-muted)}
+.modal-btn.danger{background:transparent;border:1px solid var(--occupied);color:var(--occupied)}
+.modal-btn.danger:hover{background:var(--occupied);color:#0A101C}
+</style>
+</head>
+<body>
+
+<div class="console">
+
+    <header class="console-header">
+        <div class="brand">
+            <div class="brand-mark">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 15.5c1.4-2.6 3.6-4 8-4s6.6 1.4 8 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <path d="M3 15.5h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <circle cx="7.5" cy="17.3" r="1.3" stroke="currentColor" stroke-width="1.3"/>
+                    <circle cx="16.5" cy="17.3" r="1.3" stroke="currentColor" stroke-width="1.3"/>
+                    <path d="M12 11.5V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M10.3 8h3.4v1.6a1.7 1.7 0 0 1-1.7 1.7 1.7 1.7 0 0 1-1.7-1.7V8Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                    <path d="M11 6.3v1.4M13 6.3v1.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div>
+                <h1>KDU SmartPark</h1>
+                <p class="subtitle">Live parking console</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="status-pill" id="status-bar">
+                <span class="dot offline" id="status-dot"></span>
+                <span id="status-text">Checking ANPR status…</span>
+            </div>
+            <span class="last-updated" id="last-updated"></span>
+            <a class="nav-link" href="/whitelist">Manage whitelist</a>
+        </div>
+    </header>
+
+    <div class="outage-banner" id="outage-banner" role="alert" hidden>
+        <span class="outage-dot"></span>
+        <span>Live backend unreachable — the map below is showing placeholder data, not real occupancy.</span>
+    </div>
+
+    <main class="console-grid">
+
+        <section class="panel map-panel">
+            <div class="panel-header">
+                <h2>Site map</h2>
+                <div class="map-legend">
+                    <span class="legend-item"><span class="legend-dot free"></span>Free</span>
+                    <span class="legend-item"><span class="legend-dot occupied"></span>Occupied</span>
+                    <span class="legend-item"><span class="legend-dot dean"></span>Dean slot</span>
+                    <span class="panel-meta" id="counter-text">Loading…</span>
+                </div>
+            </div>
+
+            <div class="layout-wrap">
+                <div class="corner-greenery top-left"></div>
+                <div class="corner-greenery bottom-left"></div>
+                <svg viewBox="0 0 780 650" role="img" aria-label="Car park floor plan with 9 slots in zones A, B and C">
+                    <g class="rd"><rect x="104" y="76" width="80" height="574" rx="3"/><rect x="104" y="76" width="646" height="50" rx="3"/><rect x="704" y="76" width="46" height="464" rx="3"/><rect x="470" y="400" width="234" height="50"/></g>
+                    <path class="dash" d="M144,560V101H727V420"/>
+                    <g fill="#fff" opacity=".85"><rect x="300" y="84" width="50" height="5"/><rect x="300" y="92" width="50" height="5"/><rect x="300" y="100" width="50" height="5"/><rect x="300" y="108" width="50" height="5"/></g>
+                    <text class="lbl" x="325" y="66" text-anchor="middle">CROSSING LINE</text>
+                    <rect x="278" y="150" width="96" height="480" rx="3" fill="#7B2D32"/>
+                    <g transform="translate(326,390) rotate(-90)"><rect class="chip" x="-44" y="-11" width="88" height="22" rx="4"/><text class="chip-t" y="4">FOM &amp; FOC</text></g>
+                    <rect x="388" y="150" width="82" height="480" rx="3" fill="#8A6D00"/>
+                    <g transform="translate(429,390) rotate(-90)"><rect class="chip" x="-22" y="-11" width="44" height="22" rx="4"/><text class="chip-t" y="4">FOE</text></g>
+                    <rect class="temple" x="500" y="160" width="100" height="90" rx="3"/><text class="temple-t" x="550" y="209">Temple</text>
+                    <path class="bay" d="M470,150H672V350H694V388M694,462V556H470"/>
+                    <rect x="104" y="558" width="80" height="4" fill="#DDA53B"/><rect x="141" y="544" width="6" height="60" rx="2" fill="#8E9AB3"/>
+                    <text class="lbl" x="140" y="538" text-anchor="end">ENTRANCE</text><text class="lbl" x="148" y="538">EXIT</text>
+                    <text class="lbl" x="124" y="624" text-anchor="middle" style="font-size:14px">&#9650;</text><text class="lbl" x="164" y="624" text-anchor="middle" style="font-size:14px">&#9660;</text>
+                    <g id="zone-heads"></g>
+                    <g id="slots"></g>
+                </svg>
+            </div>
+        </section>
+
+        <aside class="sidebar">
+            <section class="panel summary-panel">
+                <div class="panel-header">
+                    <h2>Occupancy</h2>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-number" id="hero-free">—</span>
+                    <span class="hero-unit">/ 9 free</span>
+                </div>
+                <div class="zone-bar">
+                    <div class="zone-bar-label"><span>Zone A</span><span id="zone-a-count">— / 3 free</span></div>
+                    <div class="zone-bar-track"><div class="zone-bar-fill" id="zone-a-fill"></div></div>
+                </div>
+                <div class="zone-bar">
+                    <div class="zone-bar-label"><span>Zone B</span><span id="zone-b-count">— / 3 free</span></div>
+                    <div class="zone-bar-track"><div class="zone-bar-fill" id="zone-b-fill"></div></div>
+                </div>
+                <div class="zone-bar">
+                    <div class="zone-bar-label"><span>Zone C</span><span id="zone-c-count">— / 3 free</span></div>
+                    <div class="zone-bar-track"><div class="zone-bar-fill" id="zone-c-fill"></div></div>
+                </div>
+            </section>
+
+            <section class="panel capture-panel">
+                <div class="panel-header">
+                    <h2>Latest capture</h2>
+                </div>
+                <img id="capture-img" class="capture-img" src="/static/capture.jpg" alt="Latest capture">
+                <p class="capture-caption" id="capture-caption">No capture yet</p>
+            </section>
+        </aside>
+
+    </main>
+
+    <section class="panel activity-panel">
+        <div class="panel-header">
+            <h2>Recent activity</h2>
+        </div>
+        <table>
+            <thead>
+                <tr><th>Time</th><th>Plate</th><th>Owner</th><th>Action</th><th>Slot</th></tr>
+            </thead>
+            <tbody id="log-body">
+                <tr><td colspan="5">Loading…</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+</div>
+
+<div class="modal-overlay" id="confirm-overlay" hidden>
+    <div class="modal-box">
+        <h3 id="confirm-title">Free this slot?</h3>
+        <p id="confirm-body">This will mark the slot as free.</p>
+        <div class="modal-actions">
+            <button class="modal-btn ghost" id="confirm-cancel">Cancel</button>
+            <button class="modal-btn danger" id="confirm-ok">Free slot</button>
+        </div>
+    </div>
+</div>
+
+<div aria-live="polite" class="sr-only" id="sr-status"></div>
+
+<script>
+// Floor diagram: Zone A = slots 1-3, Zone B = slots 4-6, Zone C = slots 7-9.
+// Slots 1 and 7 are the dean's slots (dashed purple).
+const ZONES = { a: [1, 2, 3], b: [4, 5, 6], c: [7, 8, 9] };
+const DEAN_SLOTS = { 1: "Dean FOC", 7: "Dean FOE" };
+// Slot boxes on the map: [x, y, width, height]
+const SLOT_GEOM = {
+    1: [194, 322, 70, 68], 2: [194, 396, 70, 68], 3: [194, 470, 70, 68],
+    4: [16, 118, 70, 68],  5: [16, 192, 70, 68],  6: [16, 266, 70, 68],
+    7: [484, 470, 62, 68], 8: [552, 470, 62, 68], 9: [620, 470, 62, 68]
+};
+
+// Placeholder data so the map renders immediately (and stays visible if the
+// Flask backend on the Pi isn't reachable). Real data from /api/status overrides it.
+const DEFAULT_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(id => ({ slot_id: id, is_occupied: 0, plate: null }));
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, text) {
+    const n = document.createElementNS(SVG_NS, tag);
+    Object.entries(attrs || {}).forEach(([k, v]) => n.setAttribute(k, v));
+    if (text != null) n.textContent = text;
+    return n;
+}
+
+// Zone headings (underlined, like the original) for A and B; Zone C sits under its slots.
+[["Zone A", 229, 306], ["Zone B", 51, 102]].forEach(([t, cx, y]) => {
+    const h = document.getElementById("zone-heads");
+    h.appendChild(el("text", { class: "zh", x: cx, y: y - 6 }, t));
+    h.appendChild(el("line", { class: "zline", x1: cx - 35, x2: cx + 35, y1: y, y2: y }));
+});
+document.getElementById("zone-heads").appendChild(el("text", { class: "zh", x: 583, y: 576 }, "Zone C"));
+
+// Build the nine slot boxes once; renderZones() only updates their state.
+Object.entries(SLOT_GEOM).forEach(([id, [x, y, w, h]]) => {
+    const g = el("g", { id: "slot-" + id, class: "slot free" });
+    const cx = x + (w + 12) / 2;
+    g.appendChild(el("title"));
+    g.appendChild(el("rect", { class: "bg", x, y, width: w, height: h, rx: 3 }));
+    g.appendChild(el("rect", { class: "bd", x, y, width: w, height: 2, rx: 1 }));
+    g.appendChild(el("rect", { class: "bd", x, y: y + h - 2, width: w, height: 2, rx: 1 }));
+    g.appendChild(el("rect", { class: "strip", x: x + 4, y: y + 6, width: 6, height: h - 12, rx: 3 }));
+    for (let i = 0; i < Math.floor((h - 12) / 9); i++) {
+        g.appendChild(el("circle", { class: "led", cx: x + 7, cy: y + 6 + 4.5 + i * 9, r: 2.5 }));
+    }
+    g.appendChild(el("text", { class: "cap", x: cx, y: y + 14 }, DEAN_SLOTS[id] ? "DEAN" : "SLOT"));
+    g.appendChild(el("text", { class: "sid", x: cx, y: y + 37 }, id));
+    g.appendChild(el("text", { class: "pl", x: cx, y: y + 49 }, "Free"));
+    const fb = el("g", { class: "fb", tabindex: "0", role: "button", "aria-label": "Free slot " + id });
+    fb.appendChild(el("rect", { x: cx - 24, y: y + 52, width: 48, height: 12, rx: 6 }));
+    fb.appendChild(el("text", { x: cx, y: y + 58.5 }, "Free slot"));
+    fb.addEventListener("click", () => freeSlot(Number(id)));
+    fb.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); freeSlot(Number(id)); }
+    });
+    g.appendChild(fb);
+    document.getElementById("slots").appendChild(g);
+});
+
+let pendingFreeSlotId = null;
+
+function freeSlot(slotId) {
+    pendingFreeSlotId = slotId;
+    document.getElementById("confirm-title").textContent = "Free slot " + slotId + "?";
+    document.getElementById("confirm-body").textContent =
+        "This will mark slot " + slotId + " as free in the system.";
+    document.getElementById("confirm-overlay").hidden = false;
+}
+
+async function confirmFreeSlot() {
+    const slotId = pendingFreeSlotId;
+    document.getElementById("confirm-overlay").hidden = true;
+    if (slotId == null) return;
+    try {
+        const res = await fetch("/api/slots/" + slotId + "/free", { method: "POST" });
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.error || "Failed to free slot");
+        }
+        fetchStatus();
+    } catch (e) {
+        alert("Request failed: " + e);
+    }
+}
+
+document.getElementById("confirm-cancel").addEventListener("click", () => {
+    document.getElementById("confirm-overlay").hidden = true;
+    pendingFreeSlotId = null;
+});
+document.getElementById("confirm-ok").addEventListener("click", confirmFreeSlot);
+
+function updateZoneSummary(byId) {
+    let totalFree = 0, totalSlots = 0;
+    Object.entries(ZONES).forEach(([z, ids]) => {
+        const free = ids.filter(id => byId[id] && byId[id].is_occupied !== 1).length;
+        totalFree += free;
+        totalSlots += ids.length;
+        document.getElementById("zone-" + z + "-count").textContent = free + " / " + ids.length + " free";
+        document.getElementById("zone-" + z + "-fill").style.width = (free / ids.length * 100) + "%";
+    });
+    document.getElementById("hero-free").textContent = totalFree;
+    document.querySelector(".hero-unit").textContent = "/ " + totalSlots + " free";
+}
+
+function renderZones(slots) {
+    const byId = {};
+    slots.forEach(s => byId[s.slot_id] = s);
+
+    Object.keys(SLOT_GEOM).forEach(id => {
+        const g = document.getElementById("slot-" + id);
+        const s = byId[id];
+        const occupied = !!s && s.is_occupied === 1;
+        const dean = DEAN_SLOTS[id];
+        g.setAttribute("class", "slot " + (occupied ? "occupied" : "free") + (dean ? " dean" : ""));
+        const pl = g.querySelector(".pl");
+        const plate = occupied ? (s.plate || "—") : "Free";
+        pl.textContent = plate;
+        pl.style.fontSize = plate.length > 9 ? "8px" : "";
+        pl.setAttribute("y", Number(g.querySelector(".sid").getAttribute("y")) + (occupied ? 10 : 12));
+        g.querySelector(".fb").style.display = occupied ? "" : "none";
+        g.querySelector("title").textContent = "Slot " + id + (dean ? " (" + dean + ")" : "") + ": " +
+            (occupied ? "occupied" + (s.plate ? " by " + s.plate : "") : "free");
+    });
+
+    const occupiedCount = slots.filter(s => s.is_occupied === 1).length;
+    document.getElementById("counter-text").textContent =
+        occupiedCount + " / " + slots.length + " occupied";
+
+    updateZoneSummary(byId);
+}
+
+function renderLog(log) {
+    const body = document.getElementById("log-body");
+    body.innerHTML = "";
+    if (log.length === 0) {
+        body.innerHTML = "<tr><td colspan='5'>No activity yet</td></tr>";
+        return;
+    }
+    log.forEach(entry => {
+        const tr = document.createElement("tr");
+        const time = entry.timestamp ? entry.timestamp.replace("T", " ").slice(0, 19) : "";
+        const action = (entry.action || "").toLowerCase();
+        const tagClass = action === "entry" ? "entry" : "exit";
+        tr.innerHTML = `
+            <td>${time}</td>
+            <td>${entry.plate || ""}</td>
+            <td>${entry.owner_name || ""}</td>
+            <td><span class="action-tag ${tagClass}">${entry.action || ""}</span></td>
+            <td>${entry.slot_id ?? ""}</td>
+        `;
+        body.appendChild(tr);
+    });
+}
+
+function relativeTime(fromDate) {
+    const seconds = Math.round((Date.now() - fromDate.getTime()) / 1000);
+    if (seconds < 5) return "just now";
+    if (seconds < 60) return seconds + "s ago";
+    const minutes = Math.round(seconds / 60);
+    if (minutes < 60) return minutes + "m ago";
+    const hours = Math.round(minutes / 60);
+    return hours + "h ago";
+}
+
+function announce(message) {
+    const el = document.getElementById("sr-status");
+    if (el) el.textContent = message;
+}
+
+function renderStatus(data) {
+    const dot = document.getElementById("status-dot");
+    const text = document.getElementById("status-text");
+    document.getElementById("outage-banner").hidden = true;
+    if (data.anpr_online) {
+        dot.className = "dot online";
+        text.textContent = "ANPR online (" + data.anpr_state + ")";
+        announce("ANPR camera online");
+    } else {
+        dot.className = "dot offline";
+        text.textContent = "ANPR offline";
+        announce("ANPR camera offline");
+    }
+    document.getElementById("last-updated").textContent =
+        "Updated " + new Date().toLocaleTimeString();
+}
+
+function renderCapture(timestamp) {
+    const img = document.getElementById("capture-img");
+    const caption = document.getElementById("capture-caption");
+    if (timestamp) {
+        img.src = "/static/capture.jpg?t=" + timestamp;
+        const capturedAt = new Date(timestamp * 1000);
+        caption.textContent = "Captured at " + capturedAt.toLocaleString() + " (" + relativeTime(capturedAt) + ")";
+    } else {
+        caption.textContent = "No capture yet";
+    }
+}
+
+async function fetchStatus() {
+    try {
+        const res = await fetch("/api/status");
+        const data = await res.json();
+        renderZones(data.slots);
+        renderLog(data.log);
+        renderStatus(data);
+        renderCapture(data.capture_timestamp);
+    } catch (e) {
+        // Backend not reachable — keep the placeholder slots visible
+        // instead of an empty diagram, and flag the connection issue.
+        renderZones(DEFAULT_SLOTS);
+        document.getElementById("status-text").textContent = "Connection error — showing placeholder data";
+        document.getElementById("last-updated").textContent =
+            "Updated " + new Date().toLocaleTimeString();
+        document.getElementById("outage-banner").hidden = false;
+        announce("Live backend unreachable, showing placeholder data");
+    }
+}
+
+// Draw the slots immediately with placeholder data so the console
+// is never blank, then try to pull live data from the backend.
+renderZones(DEFAULT_SLOTS);
+fetchStatus();
+setInterval(fetchStatus, 3000);
+</script>
+
+</body>
+</html>
